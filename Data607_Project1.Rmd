@@ -1,0 +1,151 @@
+---
+title: "Data607_Assignment03"
+author: "Ryan Weber"
+date: "February 18, 2018"
+output: 
+  html_document:
+    theme: lumen
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE}
+library(stringr)
+library(dplyr)
+library(tidyr)
+```
+
+Github for homework: https://github.com/rweberc/Data607_Project1
+
+  
+### Read in data  
+```{r}
+fileName <- "/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt"
+con <- file(fileName,open="r")
+line <- readLines(con)
+close(con)
+```  
+  
+  
+### Remove dashed lines 
+```{r}
+line <- line[!str_detect(line, "^-")]
+line[1:5]
+```
+
+  
+  
+### Create data.frame with a single column out of the indidivual 'lines'
+```{r}
+rawData <- data.frame(col1 = line[3:length(line)], stringsAsFactors = FALSE)
+head(rawData)  
+```  
+
+  
+### Save out vector of column names
+```{r}
+colNames1 <- str_trim(unlist(str_split(line[1], "\\|")))
+colNames2 <- str_trim(unlist(str_split(line[2], "\\|")))
+
+colNames <- c(colNames1[1:2], paste(colNames1[3:10], colNames2[3:10], sep=" "))
+colNames
+```
+
+  
+### Split the single column into several columns based on the pipe delimiter
+I believe the warning here is due to their not being a name for the column after the final pipe
+```{r}
+splitDf <- separate(rawData, col1, into = colNames, sep = "\\|", remove = TRUE,
+         convert = FALSE, extra = "warn", fill = "warn")
+head(splitDf)
+```
+
+  
+### Trim all columns
+```{r}
+splitDf <- splitDf %>% mutate_all(str_trim)
+```
+
+  
+### Break this data.frame into two sets, even rows in one set, odd rows in another
+```{r}
+topDf <- splitDf[c(TRUE, FALSE), ] # name and rounds data
+bottomDf <- splitDf[c(FALSE, TRUE), 1:2] # state and ratings data
+```
+
+  
+### Parse state and ratings information
+```{r}
+# Add column names for reference
+colnames(bottomDf) <- c("PlayerState", "temp")
+
+# Add row id to bottomDf
+bottomDf$Pair <- str_trim(topDf$Pair)
+
+# Parse pre/post rating
+bottomDf$prePostRating <- str_replace(bottomDf$temp, ".*R: ", "")
+bottomDf$prePostRating <- str_replace_all(bottomDf$prePostRating, "P[:digit:]+", "")
+bottomDf$preRating <- as.numeric(str_extract(bottomDf$prePostRating, "[:digit:]+"))
+bottomDf$postRating <- str_extract(bottomDf$prePostRating, "[:digit:]+$")
+
+# Select off needed columns
+bottomDf <- select(bottomDf, Pair, PlayerState, preRating)
+
+head(bottomDf)
+```
+
+  
+### Parse topDf from "wide" to "long" format to deal with round information
+'Points' information is parsed here for use to compare later against given "Total Pts", as a check on the work
+```{r}
+roundsDf <- gather(topDf, "Round", "temp", 4:10)
+roundsDf$Result <- str_replace(roundsDf$temp, " .*", "")
+roundsDf$Opponent <- str_trim(str_extract(roundsDf$temp, "[:digit:]+"))
+roundsDf$Points <- ifelse(roundsDf$Result %in% c("W", "B", "X"), 1,
+                             if_else(roundsDf$Result %in% c("D", "H"), .5,
+                                     0))
+head(roundsDf)
+```
+
+  
+### Merge in pre-Ratings for opponents
+```{r}
+# merge in preRates (note... cases where there was no opponent are dropped here)
+roundsDf <- left_join(roundsDf, select(bottomDf, Pair, preRating), by=c("Opponent"="Pair"))
+```
+
+  
+### Calculate average opponent pre-rating, as well as a calculated total points 
+```{r}
+finalDf <- roundsDf %>% 
+  group_by(Pair, `Player Name`, `Total Pts`) %>%
+  summarize(totalPointsCalc = sum(Points, na.rm = TRUE),
+            avgOppPreRating = round(mean(preRating, na.rm = TRUE), digits=0))
+
+stopifnot(all(as.numeric(finalDf$`Total Pts`) == finalDf$totalPointsCalc))
+```
+
+  
+### Merge in State and pre-rating values
+```{r}
+finalDf <- inner_join(bottomDf, 
+                      select(finalDf, c(Pair, `Player Name`, `Total Pts`, avgOppPreRating)),
+                      by="Pair")
+```
+
+  
+### Clean up column names and save out .csv file
+```{r}
+finalDf <- finalDf %>%
+  rename(PlayerName = `Player Name`, TotalPts = `Total Pts`, PlayerPreRating = `preRating`,
+         AvgOppPreRating = avgOppPreRating) %>%
+  select(PlayerName, PlayerState, TotalPts, PlayerPreRating, AvgOppPreRating)
+
+write.csv(finalDf, file = "/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/chess.csv",
+          row.names = FALSE)
+```
+
