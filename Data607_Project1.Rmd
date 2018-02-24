@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
 library(dplyr)
 library(tidyr)
+#library(RCurl)
 ```
 
 Github for homework: https://github.com/rweberc/Data607_Project1
@@ -24,8 +25,9 @@ Github for homework: https://github.com/rweberc/Data607_Project1
   
 ### Read in data  
 ```{r}
-fileName <- "/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt"
-con <- file(fileName,open="r")
+#fileName <- getURL("https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt")
+#fileName <- "/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt"
+con <- file("https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt",open="r")
 line <- readLines(con)
 close(con)
 ```  
@@ -42,6 +44,9 @@ line[1:5]
 ### Create data.frame with a single column out of the indidivual 'lines'
 ```{r}
 rawData <- data.frame(col1 = line[3:length(line)], stringsAsFactors = FALSE)
+
+# Remove final pipe delimiter
+rawData$col1 <- str_replace(rawData$col1, "\\| *$", "")
 head(rawData)  
 ```  
 
@@ -144,6 +149,8 @@ finalDf <- finalDf %>%
   rename(PlayerName = `Player Name`, TotalPts = `Total Pts`, PlayerPreRating = `preRating`,
          AvgOppPreRating = avgOppPreRating) %>%
   select(PlayerName, PlayerState, TotalPts, PlayerPreRating, AvgOppPreRating)
+
+head(finalDf)
 
 write.csv(finalDf, file = "/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/chess.csv",
           row.names = FALSE)

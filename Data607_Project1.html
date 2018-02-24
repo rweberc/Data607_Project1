@@ -146,8 +146,9 @@ $(document).ready(function () {
 <p>Github for homework: <a href="https://github.com/rweberc/Data607_Project1" class="uri">https://github.com/rweberc/Data607_Project1</a></p>
 <div id="read-in-data" class="section level3">
 <h3>Read in data</h3>
-<pre class="r"><code>fileName &lt;- &quot;/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt&quot;
-con &lt;- file(fileName,open=&quot;r&quot;)
+<pre class="r"><code>#fileName &lt;- getURL(&quot;https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt&quot;)
+#fileName &lt;- &quot;/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt&quot;
+con &lt;- file(&quot;https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt&quot;,open=&quot;r&quot;)
 line &lt;- readLines(con)
 close(con)</code></pre>
 </div>
@@ -164,14 +165,17 @@ line[1:5]</code></pre>
 <div id="create-data.frame-with-a-single-column-out-of-the-indidivual-lines" class="section level3">
 <h3>Create data.frame with a single column out of the indidivual ‘lines’</h3>
 <pre class="r"><code>rawData &lt;- data.frame(col1 = line[3:length(line)], stringsAsFactors = FALSE)
+
+# Remove final pipe delimiter
+rawData$col1 &lt;- str_replace(rawData$col1, &quot;\\| *$&quot;, &quot;&quot;)
 head(rawData)  </code></pre>
-<pre><code>##                                                                                        col1
-## 1     1 | GARY HUA                        |6.0  |W  39|W  21|W  18|W  14|W   7|D  12|D   4|
-## 2    ON | 15445895 / R: 1794   -&gt;1817     |N:2  |W    |B    |W    |B    |W    |B    |W    |
-## 3     2 | DAKSHESH DARURI                 |6.0  |W  63|W  58|L   4|W  17|W  16|W  20|W   7|
-## 4    MI | 14598900 / R: 1553   -&gt;1663     |N:2  |B    |W    |B    |W    |B    |W    |B    |
-## 5     3 | ADITYA BAJAJ                    |6.0  |L   8|W  61|W  25|W  21|W  11|W  13|W  12|
-## 6    MI | 14959604 / R: 1384   -&gt;1640     |N:2  |W    |B    |W    |B    |W    |B    |W    |</code></pre>
+<pre><code>##                                                                                       col1
+## 1     1 | GARY HUA                        |6.0  |W  39|W  21|W  18|W  14|W   7|D  12|D   4
+## 2    ON | 15445895 / R: 1794   -&gt;1817     |N:2  |W    |B    |W    |B    |W    |B    |W    
+## 3     2 | DAKSHESH DARURI                 |6.0  |W  63|W  58|L   4|W  17|W  16|W  20|W   7
+## 4    MI | 14598900 / R: 1553   -&gt;1663     |N:2  |B    |W    |B    |W    |B    |W    |B    
+## 5     3 | ADITYA BAJAJ                    |6.0  |L   8|W  61|W  25|W  21|W  11|W  13|W  12
+## 6    MI | 14959604 / R: 1384   -&gt;1640     |N:2  |W    |B    |W    |B    |W    |B    |W</code></pre>
 </div>
 <div id="save-out-vector-of-column-names" class="section level3">
 <h3>Save out vector of column names</h3>
@@ -187,10 +191,8 @@ colNames</code></pre>
 <h3>Split the single column into several columns based on the pipe delimiter</h3>
 <p>I believe the warning here is due to their not being a name for the column after the final pipe</p>
 <pre class="r"><code>splitDf &lt;- separate(rawData, col1, into = colNames, sep = &quot;\\|&quot;, remove = TRUE,
-         convert = FALSE, extra = &quot;warn&quot;, fill = &quot;warn&quot;)</code></pre>
-<pre><code>## Warning: Expected 10 pieces. Additional pieces discarded in 128 rows [1, 2,
-## 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...].</code></pre>
-<pre class="r"><code>head(splitDf)</code></pre>
+         convert = FALSE, extra = &quot;warn&quot;, fill = &quot;warn&quot;)
+head(splitDf)</code></pre>
 <pre><code>##     Pair                       Player Name Total Pts Round 1 Round 2
 ## 1     1   GARY HUA                             6.0     W  39   W  21
 ## 2    ON   15445895 / R: 1794   -&gt;1817          N:2     W       B    
@@ -286,7 +288,15 @@ stopifnot(all(as.numeric(finalDf$`Total Pts`) == finalDf$totalPointsCalc))</code
          AvgOppPreRating = avgOppPreRating) %&gt;%
   select(PlayerName, PlayerState, TotalPts, PlayerPreRating, AvgOppPreRating)
 
-write.csv(finalDf, file = &quot;/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/chess.csv&quot;,
+head(finalDf)</code></pre>
+<pre><code>##            PlayerName PlayerState TotalPts PlayerPreRating AvgOppPreRating
+## 1            GARY HUA          ON      6.0            1794            1605
+## 2     DAKSHESH DARURI          MI      6.0            1553            1469
+## 3        ADITYA BAJAJ          MI      6.0            1384            1564
+## 4 PATRICK H SCHILLING          MI      5.5            1716            1574
+## 5          HANSHI ZUO          MI      5.5            1655            1501
+## 6         HANSEN SONG          OH      5.0            1686            1519</code></pre>
+<pre class="r"><code>write.csv(finalDf, file = &quot;/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/chess.csv&quot;,
           row.names = FALSE)</code></pre>
 </div>
 
