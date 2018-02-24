@@ -146,9 +146,7 @@ $(document).ready(function () {
 <p>Github for homework: <a href="https://github.com/rweberc/Data607_Project1" class="uri">https://github.com/rweberc/Data607_Project1</a></p>
 <div id="read-in-data" class="section level3">
 <h3>Read in data</h3>
-<pre class="r"><code>#fileName &lt;- getURL(&quot;https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt&quot;)
-#fileName &lt;- &quot;/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt&quot;
-con &lt;- file(&quot;https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt&quot;,open=&quot;r&quot;)
+<pre class="r"><code>con &lt;- file(&quot;https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt&quot;, open=&quot;r&quot;)
 line &lt;- readLines(con)
 close(con)</code></pre>
 </div>
@@ -189,7 +187,6 @@ colNames</code></pre>
 </div>
 <div id="split-the-single-column-into-several-columns-based-on-the-pipe-delimiter" class="section level3">
 <h3>Split the single column into several columns based on the pipe delimiter</h3>
-<p>I believe the warning here is due to their not being a name for the column after the final pipe</p>
 <pre class="r"><code>splitDf &lt;- separate(rawData, col1, into = colNames, sep = &quot;\\|&quot;, remove = TRUE,
          convert = FALSE, extra = &quot;warn&quot;, fill = &quot;warn&quot;)
 head(splitDf)</code></pre>

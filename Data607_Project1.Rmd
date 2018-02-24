@@ -17,7 +17,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(stringr)
 library(dplyr)
 library(tidyr)
-#library(RCurl)
 ```
 
 Github for homework: https://github.com/rweberc/Data607_Project1
@@ -25,9 +24,7 @@ Github for homework: https://github.com/rweberc/Data607_Project1
   
 ### Read in data  
 ```{r}
-#fileName <- getURL("https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt")
-#fileName <- "/Users/ryanweber/Desktop/CUNY/Data 607 Db/Projects/Project 1/rawdata.txt"
-con <- file("https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt",open="r")
+con <- file("https://raw.githubusercontent.com/rweberc/Data607_Project1/master/rawdata.txt", open="r")
 line <- readLines(con)
 close(con)
 ```  
@@ -62,7 +59,6 @@ colNames
 
   
 ### Split the single column into several columns based on the pipe delimiter
-I believe the warning here is due to their not being a name for the column after the final pipe
 ```{r}
 splitDf <- separate(rawData, col1, into = colNames, sep = "\\|", remove = TRUE,
          convert = FALSE, extra = "warn", fill = "warn")
